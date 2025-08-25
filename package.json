@@ -1,0 +1,20 @@
+{
+  "name": "simple-api-nodejs",
+  "version": "1.0.0",
+  "description": "My first API Sign-in and Sign-up",
+  "license": "ISC",
+  "author": "AndresOrtizJDK",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "dev": "nodemon app.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "mongoose": "^8.17.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
