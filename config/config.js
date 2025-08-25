@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 // conexión a la base de datos NoSQL MongoDB
 const conexion = async () => {
     try {
-        await mongoose.connect(`mongodb+srv://${process.env.user}:${process.env.token}@cluster0.vktcqgx.mongodb.net/${process.env.collection}`, 
+        await mongoose.connect(`mongodb+srv://${process.env.USER}:${process.env.TOKEN}@cluster0.vktcqgx.mongodb.net/${process.env.COLLECTION}`, 
             {});
         console.log('Conexión a la BD');
        
