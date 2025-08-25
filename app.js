@@ -3,8 +3,12 @@ require('dotenv').config();
 
 const express = require('express');
 const conexion = require('./config/config');
-const ModelUser = require('./models/userModel');
-const { model } = require('mongoose');
+const userModel = require('./models/userModel');
+const { model, Model } = require('mongoose');
+
+//encriptar passwords
+const bcrypt = require('bcrypt');
+
 
 
 const app = express();
@@ -25,44 +29,56 @@ app.get('/', (req, res) => {
 
 //Rutas
 
-// Ruta POST para crear un nuevo usuario
-router.post("/", async (req, res) => {
-    // Obtenemos el cuerpo de la solicitud (los datos enviados por el cliente)
-    const body = req.body;
-    
-    const { cedula, email } = req.body;
-    // Buscar si ya existe un usuario con la misma cédula o email
-    const userByCedula = await ModelUser.findOne({ cedula });
-    if (userByCedula) {
-        return res.status(400).send(`ya existe un usuario con la cedula ${cedula}`);
+// Ruta POST para registar a un nuevo usuario
+router.post("/register", async (req, res) => {
+    try {
+        const { cedula, email, password } = req.body;
+
+        // Buscar si ya existe un usuario con la misma cédula o email
+        const userByCedula = await userModel.findOne({ cedula });
+        if (userByCedula) {
+            return res.status(400).send(`ya existe un usuario con la cedula ${cedula}`);
+        }
+        const userByEmail = await userModel.findOne({ email });
+        if (userByEmail) {
+            return res.status(400).send(`ya existe un usuario con el email ${email}`);
+        }
+
+        // Creamos y guardamos el usuario usando async/await
+        const user = new userModel({ cedula, email, password });
+        await user.save();
+        res.status(200).send('Usuario Registrado con exito!');
+    } catch (err) {
+        res.status(500).send('Error al Registrar al usuario');
     }
-    const userByEmail = await ModelUser.findOne({ email });
-    if (userByEmail) {
-        return res.status(400).send(`ya existe un usuario con el email ${email}`);
-    }
-    const respuesta = await ModelUser.create(body);
-    // Enviamos la respuesta al cliente con el usuario creado
-    res.send(respuesta);
 });
 
+//Ruta para login
 router.post('/login', async (req, res) => {
-    //guardamos el email y la password y dichas variables.
-    const { email, password } = req.body;
+    try {
+        const { email, password } = req.body;
+        // Buscar usuario por email
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            return res.status(401).send('Usuario no encontrado');
+        }
 
-    //buscamos al usuario por su email para ver si existe.
-    const user = await ModelUser.findOne({ email });
-
-    if (!user) {
-        // si no existe, mandamos un mensaje de error
-        return res.status(401).send('Usuario no encontrado');
+        // Comparar contraseña usando bcrypt
+        const isMatch = await new Promise((resolve, reject) => {
+            user.isCorrectPassword(password, (err, same) => {
+                if (err) reject(err);
+                else resolve(same);
+            });
+        });
+        
+        if (isMatch) {
+            res.status(200).send('Inicio de sesión exitoso');
+        } else {
+            res.status(401).send('Contraseña incorrecta');
+        }
+    } catch (err) {
+        res.status(500).send('Error al Autenticar al usuario');
     }
-    if (user.password !== password) {
-        //si existe pero sus credenciales no coinciden, error.
-        return res.status(401).send('Contraseña incorrecta');
-    }
-
-    // si no entra en ninguna condicion anterior, es porque fue exitoso su inicio de sesion
-    res.status(200).send('Inicio de sesión exitoso');
 });
 
 //conexion a la base de datos
